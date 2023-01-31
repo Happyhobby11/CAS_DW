@@ -2,3 +2,4 @@ pyspark
 python-dotenv
 wheel
 black
+sqlvalidator

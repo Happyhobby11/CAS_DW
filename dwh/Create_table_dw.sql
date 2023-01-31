@@ -17,15 +17,17 @@ DROP TABLE IF EXISTS dim_date;
 DROP TABLE IF EXISTS dim_district;
 CREATE TABLE dim_district(
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL
+    name VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 CREATE TABLE dim_date(
     id SERIAL PRIMARY KEY,
-    year INTEGER NOT NULL,
-    month INTEGER NOT NULL,
+    year INTEGER,
+    month INTEGER,
     day INTEGER,
     hour INTEGER,
-    quarter INTEGER NOT NULL,
+    quarter INTEGER,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -35,7 +37,7 @@ CREATE TABLE dim_user(
     email VARCHAR(255) UNIQUE NOT NULL,
     year_birth INTEGER NOT NULL,
     month_birth INTEGER NOT NULL,
-    gender INTEGER NOT NULL,
+    gender VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -65,13 +67,13 @@ CREATE TABLE dim_map(
 CREATE UNIQUE INDEX idx_unique_map ON dim_map(chinese_name, english_name);
 CREATE TABLE fact_comment(
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    content text NOT NULL,
+    title VARCHAR(255),
+    content text,
     is_thumb BOOLEAN,
     date_id INTEGER,
     FOREIGN KEY (date_id) REFERENCES dim_date(id),
     map_id INTEGER,
-    FOREIGN KEY (map_id) REFERENCES dim_map(id),
+    FOREIGN KEY (map_id) REFERENCES dim_map(id)
 );
 CREATE TABLE fact_events(
     id SERIAL PRIMARY KEY,
@@ -84,24 +86,20 @@ CREATE TABLE fact_events(
 );
 CREATE TABLE fact_exp(
     id SERIAL PRIMARY KEY,
-    poster_email VARCHAR(255) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    num_thumbs_up INTEGER NOT NULL,
-    num_thumbs_down INTEGER NOT NULL,
-    exp_id INTEGER PRIMARY KEY UNIQUE,
+    poster_email VARCHAR(255),
+    title VARCHAR(255),
     date_id INTEGER,
     FOREIGN KEY (date_id) REFERENCES dim_date(id)
 );
 CREATE TABLE fact_exp_like(
     id SERIAL PRIMARY KEY,
-    user_email VARCHAR(255) NOT NULL,
-    thumb_status VARCHAR(255) NOT NULL,
-    exp_id INTEGER,
-    FOREIGN KEY (exp_id) REFERENCES fact_exp(exp_id),
+    user_email VARCHAR(255),
+    thumb_status VARCHAR(255),
+    exp_title VARCHAR(255),
     date_id INTEGER,
     FOREIGN KEY (date_id) REFERENCES dim_date(id)
 );
-CREATE UNIQUE INDEX idx_unique_exp_like ON fact_exp_like(user_email, exp_id);
+CREATE UNIQUE INDEX idx_unique_exp_like ON fact_exp_like(user_email, exp_title);
 CREATE TABLE fact_pets(
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -124,13 +122,13 @@ CREATE TABLE fact_pets_img(
     id SERIAL PRIMARY KEY,
     pet_id INTEGER,
     FOREIGN KEY (pet_id) REFERENCES fact_pets(id),
-    name VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) UNIQUE,
     date_img_id INTEGER,
     FOREIGN KEY (date_img_id) REFERENCES dim_date(id)
 );
 CREATE TABLE staging_exp_like(
     id SERIAL PRIMARY KEY,
-    exp_id INTEGER,
+    exp_title VARCHAR(255),
     user_email VARCHAR(255),
     thumb_status VARCHAR(255),
     year INTEGER,
@@ -141,11 +139,8 @@ CREATE TABLE staging_exp_like(
 );
 CREATE TABLE staging_exp(
     id SERIAL PRIMARY KEY,
-    exp_id INTEGER,
-    poster_email VARCHAR(255) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    num_thumbs_up INTEGER NOT NULL,
-    num_thumbs_down INTEGER NOT NULL,
+    poster_email VARCHAR(255),
+    title VARCHAR(255),
     year INTEGER,
     month INTEGER,
     day INTEGER,
@@ -154,9 +149,9 @@ CREATE TABLE staging_exp(
 );
 CREATE TABLE staging_events(
     id SERIAL PRIMARY KEY,
-    host_email VARCHAR(255) NOT NULL,
-    animal_type VARCHAR(255) NOT NULL,
-    district VARCHAR(255) NOT NULL,
+    host_email VARCHAR(255),
+    animal_type VARCHAR(255),
+    district VARCHAR(255),
     year INTEGER,
     month INTEGER,
     day INTEGER,
@@ -170,8 +165,8 @@ CREATE TABLE staging_maps(
     chinese_name VARCHAR(255) NOT NULL,
     english_name VARCHAR(255) NOT NULL,
     district VARCHAR(255) NOT NULL,
-    comment_title VARCHAR(255) NOT NULL,
-    comment_content text NOT NULL,
+    comment_title VARCHAR(255),
+    comment_content text,
     is_thumb BOOLEAN,
     year INTEGER,
     month INTEGER,
@@ -186,18 +181,20 @@ CREATE TABLE staging_pets(
     user_email VARCHAR(255) NOT NULL,
     user_year_birth INTEGER NOT NULL,
     user_month_birth INTEGER NOT NULL,
-    user_gender INTEGER NOT NULL,
+    user_gender VARCHAR(255) NOT NULL,
     district VARCHAR(255) NOT NULL,
     parent_species VARCHAR(255) NOT NULL,
     species VARCHAR(255) NOT NULL,
     year_birth INTEGER,
     month_birth INTEGER,
-    img VARCHAR(255) NOT NULL,
+    img VARCHAR(255),
     img_year INTEGER,
     img_month INTEGER
 );
+-----triggers-----
+-----exp-----
 CREATE OR REPLACE FUNCTION insert_exp() RETURNS TRIGGER LANGUAGE plpgsql AS $$
-DECLARE dim_date_id INT := 0;
+DECLARE dim_date_id INTEGER;
 BEGIN
 INSERT INTO dim_date (year, month, day, hour, quarter)
 VALUES (
@@ -213,17 +210,11 @@ RETURNING id INTO dim_date_id;
 INSERT INTO fact_exp (
         poster_email,
         title,
-        num_thumbs_up,
-        num_thumbs_down,
-        exp_id,
         date_id
     )
 VALUES (
         NEW.poster_email,
         NEW.title,
-        NEW.num_thumbs_up,
-        NEW.num_thumbs_down,
-        NEW.exp_id,
         dim_date_id
     );
 RETURN NEW;
@@ -232,8 +223,9 @@ $$;
 CREATE TRIGGER trigger_insert_fact_exp
 AFTER
 INSERT ON staging_exp FOR EACH ROW EXECUTE PROCEDURE insert_exp();
+-----exp_like-----
 CREATE OR REPLACE FUNCTION insert_exp_like() RETURNS TRIGGER LANGUAGE plpgsql AS $$
-DECLARE dim_date_id INT := 0;
+DECLARE dim_date_id INTEGER;
 BEGIN
 INSERT INTO dim_date (year, month, day, hour, quarter)
 VALUES (
@@ -249,13 +241,13 @@ RETURNING id INTO dim_date_id;
 INSERT INTO fact_exp_like(
         user_email,
         thumb_status,
-        exp_id,
+        exp_title,
         date_id
     )
 VALUES (
         NEW.user_email,
         NEW.thumb_status,
-        NEW.exp_id,
+        NEW.exp_title,
         dim_date_id
     );
 RETURN NEW;
@@ -264,9 +256,10 @@ $$;
 CREATE TRIGGER trigger_insert_fact_exp_like
 AFTER
 INSERT ON staging_exp_like FOR EACH ROW EXECUTE PROCEDURE insert_exp_like();
+-----events-----
 CREATE OR REPLACE FUNCTION insert_events() RETURNS TRIGGER LANGUAGE plpgsql AS $$
-DECLARE dim_date_id INT := 0;
-dim_district_id := 0;
+DECLARE dim_date_id INTEGER;
+dim_district_id INTEGER;
 BEGIN
 INSERT INTO dim_date (year, month, day, hour, quarter)
 VALUES (
@@ -302,11 +295,12 @@ $$;
 CREATE TRIGGER trigger_insert_fact_event
 AFTER
 INSERT ON staging_events FOR EACH ROW EXECUTE PROCEDURE insert_events();
+-----comments-----
 CREATE OR REPLACE FUNCTION insert_comments() RETURNS TRIGGER LANGUAGE plpgsql AS $$
-DECLARE dim_map_id := 0;
-dim_district_id := 0;
-dim_date_id := 0;
-BEGIN
+DECLARE dim_map_id INTEGER;
+dim_district_id INTEGER;
+dim_date_id INTEGER;
+BEGIN IF NOT NEW.comment_title IS NULL THEN
 INSERT INTO dim_date (year, month, day, hour, quarter)
 VALUES (
         NEW.year,
@@ -318,6 +312,7 @@ VALUES (
 UPDATE
 SET updated_at = NOW()
 RETURNING id INTO dim_date_id;
+END IF;
 INSERT INTO dim_district(name)
 VALUES (NEW.district) ON CONFLICT (name) DO
 UPDATE
@@ -328,7 +323,7 @@ INSERT INTO dim_map (
         english_type,
         chinese_name,
         english_name,
-        district_id,
+        district_id
     )
 VALUES (
         NEW.chinese_type,
@@ -340,6 +335,7 @@ VALUES (
 UPDATE
 SET updated_at = NOW()
 RETURNING id INTO dim_map_id;
+IF NOT NEW.comment_title IS NULL THEN
 INSERT INTO fact_comment (
         title,
         content,
@@ -350,23 +346,26 @@ INSERT INTO fact_comment (
 VALUES (
         NEW.comment_title,
         NEW.comment_content,
-        NEW.is_thumb dim_date_id,
+        NEW.is_thumb,
+        dim_date_id,
         dim_map_id
     );
+END IF;
 RETURN NEW;
 END;
 $$;
 CREATE TRIGGER trigger_insert_fact_comment
 AFTER
 INSERT ON staging_maps FOR EACH ROW EXECUTE PROCEDURE insert_comments();
+-----pets-----
 CREATE OR REPLACE FUNCTION insert_pets() RETURNS TRIGGER LANGUAGE plpgsql AS $$
-DECLARE dim_user_id := 0;
-dim_parent_species_id := 0;
-dim_species_id := 0;
-dim_date_birth_id := 0;
-dim_date_img_id := 0;
-dim_district_id := 0;
-fact_pet_id := 0;
+DECLARE dim_user_id INTEGER;
+dim_parent_species_id INTEGER;
+dim_species_id INTEGER;
+dim_date_birth_id INTEGER;
+dim_date_img_id INTEGER;
+dim_district_id INTEGER;
+fact_pet_id INTEGER;
 BEGIN
 INSERT INTO dim_parent_species (species)
 VALUES (NEW.parent_species) ON CONFLICT (species) DO
@@ -404,6 +403,7 @@ VALUES (
 UPDATE
 SET updated_at = NOW()
 RETURNING id INTO dim_date_birth_id;
+IF NOT NEW.img IS NULL THEN
 INSERT INTO dim_date (year, month, day, hour, quarter)
 VALUES (
         NEW.img_year,
@@ -415,6 +415,7 @@ VALUES (
 UPDATE
 SET updated_at = NOW()
 RETURNING id INTO dim_date_img_id;
+END IF;
 INSERT INTO dim_district(name)
 VALUES (NEW.district) ON CONFLICT (name) DO
 UPDATE
@@ -441,8 +442,10 @@ VALUES (
 UPDATE
 SET updated_at = NOW()
 RETURNING id INTO fact_pet_id;
+IF NOT NEW.img IS NULL THEN
 INSERT INTO fact_pets_img (pet_id, name, date_img_id)
 VALUES (fact_pet_id, NEW.img, dim_date_img_id);
+END IF;
 RETURN NEW;
 END;
 $$;
