@@ -54,7 +54,7 @@ services:
     volumes:
       - ./src:/opt/bitnami/spark/src
   postgres:
-    image: "postgres:latest"
+    image: "postgres:13"
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

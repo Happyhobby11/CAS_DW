@@ -2,4 +2,6 @@ pyspark
 python-dotenv
 wheel
 black
-sqlvalidator
+psycopg2-binary
+google-cloud-bigquery
+pandas
