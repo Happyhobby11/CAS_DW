@@ -1,11 +1,11 @@
-from config import cfg
-
-# from pyspark.sql import DataFrame
-import pandas as pd
-import psycopg2 as psycopg
-
+from config import cfg, ComplexEncoder
+from table import fact_dim, bgtables
 from google.cloud import bigquery
+
+# import pandas as pd
+import psycopg2 as psycopg
 import json
+
 
 conn = psycopg.connect(
     dbname=cfg.POSTGRES_DB_DW,
@@ -16,18 +16,24 @@ conn = psycopg.connect(
 conn.autocommit = True
 client = bigquery.Client()
 
-staging_pets_sql = "staging_pets"
-staging_maps_sql = "staging_maps"
-queries = [staging_pets_sql, staging_maps_sql]
+# staging_pets_sql = "staging_pets"
+# staging_maps_sql = "staging_maps"
+# queries = [staging_pets_sql, staging_maps_sql]
+# queries = bgtables[0:2]
+queries = [fact_dim.DIM_DISTRICT]
 
 for query in queries:
     with conn.cursor() as cur:
         cur.execute(f"SELECT * from {query}")
-        print(f"======{query}======")
+        print(f"======{query} before encoding ======")
         value = cur.fetchall()
         print(value)
+        print(f"======{query} after encoding ======")
+        # new_value = json.dumps(value, cls=ComplexEncoder)
+        # print(new_value)
         target = client.get_table(f"{cfg.PROJECT_ID}.{cfg.DATASET_ID}.{query}")
-        client.insert_rows_json(target, value)
+        client.insert_rows(target, value)
+        print(f"insert {query} to BQ done!")
 
 
 # def prepare_spark():

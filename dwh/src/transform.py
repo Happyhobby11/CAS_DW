@@ -1,10 +1,7 @@
-from dotenv import load_dotenv
 from pyspark.sql import DataFrame
 from config import cfg
 from query import qy
 from table import tb
-
-load_dotenv()
 
 
 def prepare_spark():
