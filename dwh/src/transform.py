@@ -72,3 +72,9 @@ def transform():
 
 if __name__ == "__main__":
     transform()
+    # import schedule,time
+
+    # schedule.every().day.at("00:00").do(transform)
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)

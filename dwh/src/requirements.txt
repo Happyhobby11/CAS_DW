@@ -1,7 +1,7 @@
 pyspark
 python-dotenv
 wheel
+schedule
 black
 psycopg2-binary
 google-cloud-bigquery
-pandas

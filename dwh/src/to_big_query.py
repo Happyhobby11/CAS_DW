@@ -1,10 +1,11 @@
-from config import cfg, ComplexEncoder
-from table import fact_dim, bgtables
+from config import cfg
+from table import bgtables
+from query import sqtables
 from google.cloud import bigquery
 
-# import pandas as pd
 import psycopg2 as psycopg
-import json
+
+# import json
 
 
 conn = psycopg.connect(
@@ -16,43 +17,24 @@ conn = psycopg.connect(
 conn.autocommit = True
 client = bigquery.Client()
 
-# staging_pets_sql = "staging_pets"
-# staging_maps_sql = "staging_maps"
-# queries = [staging_pets_sql, staging_maps_sql]
-# queries = bgtables[0:2]
-queries = [fact_dim.DIM_DISTRICT]
 
-for query in queries:
+item1 = [sqtables[0], bgtables[0]]
+item2 = [sqtables[1], bgtables[1]]
+item3 = [sqtables[2], bgtables[2]]
+item4 = [sqtables[3], bgtables[3]]
+item5 = [sqtables[4], bgtables[4]]
+
+inputs = [item1, item2, item3, item4, item5]
+
+for input in inputs:
     with conn.cursor() as cur:
-        cur.execute(f"SELECT * from {query}")
-        print(f"======{query} before encoding ======")
+        cur.execute(f"SELECT {input[0]} from {input[1]}")
+        print(f"======{input[1]} before encoding ======")
         value = cur.fetchall()
-        print(value)
-        print(f"======{query} after encoding ======")
+        print(value[0:20])
+        # print(f"======{query} after encoding ======")
         # new_value = json.dumps(value, cls=ComplexEncoder)
         # print(new_value)
-        target = client.get_table(f"{cfg.PROJECT_ID}.{cfg.DATASET_ID}.{query}")
+        target = client.get_table(f"{cfg.PROJECT_ID}.{cfg.DATASET_ID}.{input[1]}")
         client.insert_rows(target, value)
-        print(f"insert {query} to BQ done!")
-
-
-# def prepare_spark():
-#     global spark
-
-#     # Initalize Spark
-#     from pyspark.sql import SparkSession
-
-#     # lastest postgresql jdbc version is 42.5.1
-#     packages = ["org.postgresql:postgresql:42.2.27"]
-
-#     spark = (
-#         SparkSession.builder.appName("Transform from application database")
-#         .master(f"spark://{cfg.SPARK_MASTER}:7077")
-#         .config("spark.jars.packages", ",".join(packages))
-#         .getOrCreate()
-#     )
-
-# table names
-# edit_pages = client.get_table('tecky-analytics.recentchange.edit_pages')
-
-# result = client.insert_rows_json(edit_pages,[value])
+        print(f"insert {input[1]} to BQ done!")

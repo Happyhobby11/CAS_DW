@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class queries:
+class staging_queries:
     PETS_QUERY: str = """
     (SELECT
         p.name AS name,
@@ -47,7 +47,7 @@ class queries:
     EVENTS_QUERY: str = """
     (SELECT
         u.email AS host_email,
-        e.location AS district,
+        e.district AS district,
         e.animal_type,
         EXTRACT (year FROM e.created_at) AS year,
         EXTRACT (month FROM e.created_at) AS month,
@@ -85,49 +85,25 @@ class queries:
     exp_like_info"""
 
 
-qy = queries()
-# (
-#             WITH tmp_table AS
-#                 (
-#                     SELECT * FROM species WHERE family_id is NULL
-#                 )
-#             SELECT tmp_table.english_species
-#             FROM species
-#             JOIN tmp_table ON tmp_table.id = species.family_id
-#             WHERE tmp_table.family_id is NULL
-#         ) parent_species,
+qy = staging_queries()
 
-#     (SELECT
-#         p.name as name,
-#         p.gender as gender,
-#         u.email as user_email,
-#         u.year_birth as user_year_birth,
-#         u.month_birth as user_month_birth,
-#         u.gender as user_gender,
-#         u.district as district,
-#         f.eng_species as parent_species,
-#         s.eng_species as species,
-#         EXTRACT (year FROM p.date_birth) as year_birth,
-#         EXTRACT (month FROM p.date_birth) as month_birth,
-#         pi.name as img,
-#         EXTRACT (year FROM pi.created_at) as img_year,
-#         EXTRACT (month FROM pi.created_at) as img_month
-#     FROM pets p
-#     full join users u on p.user_id = u.id
-#     full join species s on s.id = p.species_id
-#     full join species f on f.id = s.family_id
-#     full join pets_img pi on pi.pet_id = p.id)
-#     pets_info"""
-# """
-# (SELECT
-#     s.id as id_s,
-#     s.family_id as family_id_s,
-#     s.chinese_species as chinese_species_s,
-#     s.english_species as english_species_s,
-#     f.id as id_f,
-#     f.family_id as family_id_f,
-#     f.chinese_species as chinese_species_f,
-#     f.english_species as english_species_f
-# FROM species s, species f
-# WHERE f.id = s.family_id)
-#     pets_info"""
+
+class select_queries:
+    PETS_QUERY: str = "name,gender,user_email,user_year_birth,user_month_birth,user_gender,district,parent_species,species,year_birth,month_birth,img,img_year,img_month"
+    MAPS_QUERY: str = "chinese_typeenglish_type,chinese_name,english_name,district,comment_title,comment_content,is_thumb,year,month,day,hour,quarter"
+    EVENTS_QUERY: str = "host_email,animal_type,district,year,month,day,hour,quarter"
+    EXP_QUERY: str = "poster_email,title,year,month,day,hour,quarter"
+    EXP_LIKE_QUERY: str = (
+        "exp_title,user_email,thumb_status,year,month,day,hour,quarter"
+    )
+
+
+sq = select_queries()
+
+sqtables = [
+    sq.PETS_QUERY,
+    sq.MAPS_QUERY,
+    sq.EVENTS_QUERY,
+    sq.EXP_QUERY,
+    sq.EXP_LIKE_QUERY,
+]

@@ -10,6 +10,9 @@ class staging_tables:
     EXP_LIKE_TABLE: str = "staging_exp_like"
 
 
+tb = staging_tables()
+
+
 class fact_dim:
     DIM_DATE: str = "dim_date"
     DIM_DISTRICT: str = "dim_district"
@@ -26,18 +29,9 @@ class fact_dim:
 
 
 bgtables = [
-    fact_dim.DIM_DATE,
-    fact_dim.DIM_DISTRICT,
-    fact_dim.DIM_map,
-    fact_dim.DIM_PARENT_SPECIES,
-    fact_dim.DIM_SPECIES,
-    fact_dim.DIM_USER,
-    fact_dim.FACT_COMMENT,
-    fact_dim.FACT_EVENTS,
-    fact_dim.FACT_EXP,
-    fact_dim.FACT_EXP_LIKE,
-    fact_dim.FACT_PETS,
-    fact_dim.FACT_PETS_IMG,
+    tb.PETS_TABLE,
+    tb.MAPS_TABLE,
+    tb.EVENTS_TABLE,
+    tb.EXP_TABLE,
+    tb.EXP_LIKE_TABLE,
 ]
-
-tb = staging_tables()
