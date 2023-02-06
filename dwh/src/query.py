@@ -23,7 +23,8 @@ class staging_queries:
     INNER JOIN users u ON p.user_id = u.id
     INNER JOIN species s ON s.id = p.species_id
     INNER JOIN species f ON f.id = s.family_id
-    FULL JOIN pets_img pi ON pi.pet_id = p.id)
+    FULL JOIN pets_img pi ON pi.pet_id = p.id
+    WHERE pi.created_at ::date  = CURRENT_DATE - interval '1' day)
     pets_info"""
     MAPS_QUERY: str = """
     (SELECT
@@ -42,7 +43,8 @@ class staging_queries:
         EXTRACT (quarter FROM c.created_at) AS quarter
     FROM maps m
     INNER JOIN map_type mt ON mt.id = m.map_type_id
-    FULL JOIN comments c ON c.map_id = m.id)
+    FULL JOIN comments c ON c.map_id = m.id
+    WHERE c.created_at ::date  = CURRENT_DATE - interval '1' day)
     maps_info"""
     EVENTS_QUERY: str = """
     (SELECT
@@ -55,7 +57,8 @@ class staging_queries:
         EXTRACT (hour FROM e.created_at) AS hour,
         EXTRACT (quarter FROM e.created_at) AS quarter
     FROM events e
-    INNER JOIN users u ON u.id = e.host_id)
+    INNER JOIN users u ON u.id = e.host_id
+    WHERE e.created_at ::date  = CURRENT_DATE - interval '1' day)
     events_info"""
     EXP_QUERY: str = """
     (SELECT
@@ -67,7 +70,8 @@ class staging_queries:
         EXTRACT (hour FROM e.created_at) AS hour,
         EXTRACT (quarter FROM e.created_at) AS quarter
     FROM experience e
-    INNER JOIN users u on u.id = e.poster_id)
+    INNER JOIN users u on u.id = e.poster_id
+    WHERE e.created_at ::date  = CURRENT_DATE - interval '1' day)
     exp_info"""
     EXP_LIKE_QUERY: str = """
     (SELECT
@@ -81,7 +85,8 @@ class staging_queries:
         EXTRACT (quarter FROM el.created_at) AS quarter
     FROM experience_like el
     INNER JOIN users u ON u.id = el.user_id
-    INNER JOIN experience e ON e.id = el.exp_id)
+    INNER JOIN experience e ON e.id = el.exp_id
+    WHERE el.created_at ::date  = CURRENT_DATE - interval '1' day)
     exp_like_info"""
 
 
