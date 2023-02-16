@@ -1,5 +1,4 @@
 CREATE USER looker WITH ENCRYPTED PASSWORD 'some_password_here';
-CREATE USER looker WITH ENCRYPTED PASSWORD 'Xje29eHQrHozPbnuk';
 GRANT CONNECT ON DATABASE wikipetiadw to looker;
 \ c database_name
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO looker;
